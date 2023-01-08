@@ -1,0 +1,54 @@
+version: "3.9"
+services:
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 09367518767
+    hostname: "mongo"
+
+  rabbitmq:
+    image: 'rabbitmq:management'
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    hostname: "rabbitmq"
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 09367518767
+      POSTGRES_DB: payment
+    hostname: "postgres"
+    ports:
+      - "5432:5432"
+
+  payment:
+    depends_on:
+      - rabbitmq
+      - postgres
+    build: ./Payment
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.datasource.url" : "jdbc:postgresql://postgres:5432/payment",
+        "rabbitmq.host" : "rabbitmq"
+      }'
+
+  web:
+    depends_on:
+      - rabbitmq
+      - mongodb
+    build: ./online-shop
+    ports:
+      - "8010:8010"
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.data.mongodb.database" : "y",
+        "spring.data.mongodb.host" : "mongo",
+        "rabbitmq.host" : "rabbitmq"
+      }'
